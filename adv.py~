@@ -1,14 +1,5 @@
 from bluetooth import *
 import subprocess
-import signal
-import sys
-
-def signal_handler(signal,frame):
-    print "Ctrl+C"
-    server_sock.close()
-    sys.exit(0)
-
-signal.signal(signal.SIGINT,signal_handler)
 
 cmd = "sudo hciconfig hci0 piscan"
 subprocess.check_output(cmd, shell=True)
