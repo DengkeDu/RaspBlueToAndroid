@@ -1,7 +1,10 @@
+#!/usr/bin/python
+
 from bluetooth import *
 import subprocess
 import signal
 import sys
+from megapi import *
 
 def signal_handler(signal,frame):
     print "Ctrl+C"
@@ -9,6 +12,9 @@ def signal_handler(signal,frame):
     sys.exit(0)
 
 signal.signal(signal.SIGINT,signal_handler)
+
+bot = MegaPi()
+bot.start("/dev/ttyS0")
 
 cmd = "sudo hciconfig hci0 piscan"
 subprocess.check_output(cmd, shell=True)
@@ -38,6 +44,11 @@ while True:
             data=client_sock.recv(1024)
             if not data:
                 break
+            if data == "left":
+                bot.stepperMotorRun()
+            if data == "dianjistop":
+                bot.motorRun(3,0)
+                bot.motorRun(4,0)
             print data
     except:
         print "Closing socket" 
