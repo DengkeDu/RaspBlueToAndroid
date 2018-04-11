@@ -4,7 +4,20 @@ from bluetooth import *
 import subprocess
 import signal
 import sys
-from megapi import *
+import multiprocessing as mp
+import time
+# from megapi import *
+flag = 1
+
+def rec(client_sock):
+    while True:
+        time.sleep(0.5)
+        try:
+            if client_sock.getpeername()[0]:
+                client_sock.send("ddk")
+        except:
+            print "client_sock close."
+            break
 
 def signal_handler(signal,frame):
     print "Ctrl+C"
@@ -13,8 +26,8 @@ def signal_handler(signal,frame):
 
 signal.signal(signal.SIGINT,signal_handler)
 
-bot = MegaPi()
-bot.start("/dev/ttyS0")
+# bot = MegaPi()
+# bot.start("/dev/ttyS0")
 
 cmd = "sudo hciconfig hci0 piscan"
 subprocess.check_output(cmd, shell=True)
@@ -35,8 +48,13 @@ advertise_service(server_sock, "AquaPiServer",
         profiles = [ SERIAL_PORT_PROFILE ])
 print "advertise service"
 
+value = mp.Value('i',1)
 while True:
+    print "Head"
+    value.value = 1
     client_sock,client_info = server_sock.accept()
+    p = mp.Process(target=rec,args=(client_sock,))
+    p.start()
     print "connect to:"
     print client_info
     try:
@@ -44,17 +62,11 @@ while True:
             data=client_sock.recv(1024)
             if not data:
                 break
-            if data == "left":
-                bot.stepperMotorRun()
-            if data == "dianjistop":
-                bot.motorRun(3,0)
-                bot.motorRun(4,0)
+            if data=="over":
+                p.terminate()
+                client_sock.close()
             print data
     except:
-        print "Closing socket" 
         client_sock.close()
-        print "close one connection!"
-        print "prepare to start other connection!"
-
 server_sock.close()
        
